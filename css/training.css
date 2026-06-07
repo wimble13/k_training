@@ -1,0 +1,321 @@
+.training-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 8px 0 0;
+  min-height: calc(100vh - 120px);
+}
+
+.training-stage {
+  position: relative;
+  width: 280px;
+  height: 280px;
+  margin: 20px auto 30px;
+}
+
+.wave-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  overflow: hidden;
+  background: var(--card-2);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+  border: 2px solid rgba(110, 168, 255, 0.25);
+}
+
+.wave-fill {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(180deg, rgba(110, 168, 255, 0.9), rgba(74, 134, 240, 0.7));
+  transition: height 0.3s linear;
+}
+
+.wave-fill::before,
+.wave-fill::after {
+  content: "";
+  position: absolute;
+  left: -50%;
+  right: -50%;
+  height: 30px;
+  background-repeat: repeat-x;
+  background-size: 200px 30px;
+}
+
+.wave-fill::before {
+  top: -15px;
+  background-image: radial-gradient(
+    circle at 20px 30px,
+    rgba(110, 168, 255, 0.9) 18px,
+    transparent 19px
+  );
+  animation: wave 4s linear infinite;
+}
+
+.wave-fill::after {
+  top: -22px;
+  background-image: radial-gradient(
+    circle at 60px 30px,
+    rgba(74, 134, 240, 0.7) 18px,
+    transparent 19px
+  );
+  animation: wave 6s linear infinite reverse;
+  opacity: 0.6;
+}
+
+@keyframes wave {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(200px);
+  }
+}
+
+.wave-center {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.wave-action {
+  font-size: 78px;
+  font-weight: 800;
+  letter-spacing: 4px;
+  color: #fff;
+  text-shadow: 0 4px 18px rgba(0, 0, 0, 0.4);
+  line-height: 1;
+}
+
+.wave-time {
+  margin-top: 8px;
+  font-size: 36px;
+  font-weight: 700;
+  color: #fff;
+  font-variant-numeric: tabular-nums;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.4);
+}
+
+.wave-section {
+  margin-top: 6px;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.85);
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+}
+
+.training-actions {
+  display: flex;
+  gap: 12px;
+  margin: 8px 0 16px;
+  width: 100%;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.t-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--card);
+  color: var(--text);
+  border: 0;
+  border-radius: 14px;
+  padding: 12px 18px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  min-width: 100px;
+  justify-content: center;
+  box-shadow: var(--shadow);
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+
+.t-btn:active {
+  transform: scale(0.96);
+}
+
+.t-btn.toggle.on {
+  background: var(--primary-2);
+  color: #fff;
+}
+
+.t-btn.toggle.off {
+  background: var(--card);
+  color: var(--text-dim);
+}
+
+.t-btn.pause {
+  background: var(--card-2);
+  position: relative;
+}
+
+.t-btn.pause.pressing {
+  background: var(--warn);
+  color: #fff;
+}
+
+.training-hint {
+  margin-top: auto;
+  padding: 12px 14px;
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 12px;
+  color: var(--text-dim);
+  font-size: 12px;
+  text-align: center;
+  line-height: 1.6;
+}
+
+.training-hint b {
+  color: var(--accent);
+}
+
+/* ===== 训练前医学提示模态 ===== */
+.medical-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 1500;
+  background: rgba(8, 14, 26, 0.9);
+  backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px 16px;
+  animation: mm-fade-in 0.2s ease;
+}
+
+.medical-modal.closing {
+  animation: mm-fade-out 0.2s ease forwards;
+}
+
+@keyframes mm-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes mm-fade-out {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+.medical-modal-card {
+  width: 100%;
+  max-width: 420px;
+  max-height: 90vh;
+  background: var(--card);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.medical-modal-title {
+  padding: 20px 20px 4px;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.medical-modal-body {
+  padding: 12px 20px 8px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.medical-hint-section {
+  margin-bottom: 14px;
+}
+
+.medical-hint-h {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--primary);
+  margin-bottom: 4px;
+}
+
+.medical-hint-section p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--text-dim);
+}
+
+.medical-hint-section p b {
+  color: var(--warn);
+  font-weight: 600;
+}
+
+.medical-modal-btn {
+  margin: 0 20px 20px;
+  background: var(--primary-2);
+  color: #fff;
+  border: 0;
+  border-radius: 14px;
+  padding: 14px;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: var(--shadow);
+}
+
+.medical-modal-btn:active {
+  transform: scale(0.98);
+}
+
+/* ===== 训练前医学提示 banner ===== */
+.medical-banner {
+  position: fixed;
+  top: calc(var(--safe-top) + 56px);
+  left: 12px;
+  right: 12px;
+  z-index: 1200;
+  background: rgba(255, 184, 107, 0.95);
+  color: #1a1a1a;
+  border-radius: 12px;
+  padding: 10px 14px;
+  font-size: 13px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+  transform: translateY(-20px);
+  opacity: 0;
+  transition: transform 0.25s ease, opacity 0.25s ease;
+  pointer-events: none;
+}
+
+.medical-banner.show {
+  transform: translateY(0);
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.medical-banner span {
+  flex: 1;
+}
+
+.medical-banner-close {
+  background: rgba(0, 0, 0, 0.1);
+  border: 0;
+  color: #1a1a1a;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}

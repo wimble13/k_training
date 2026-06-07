@@ -1,0 +1,27 @@
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# 编辑器
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Node(本项目没有,但保留兼容性)
+node_modules/
+npm-debug.log
+yarn-debug.log
+yarn-error.log
+
+# 日志
+*.log
+
+# 临时测试文件(开发期会临时创建的 _test.mjs / _smoke_test.mjs)
+_*.mjs
+
+# 环境变量
+.env
+.env.local

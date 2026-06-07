@@ -1,0 +1,221 @@
+.record-wrap {
+  padding: 12px 0 0;
+}
+
+.record-hero {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 18px;
+}
+
+.record-stat {
+  flex: 1;
+  background: var(--card);
+  border-radius: var(--radius);
+  padding: 14px 10px;
+  text-align: center;
+  box-shadow: var(--shadow);
+}
+
+.record-stat .v {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--primary);
+}
+
+.record-stat.exp .v {
+  color: var(--accent);
+}
+
+.record-stat .k {
+  font-size: 11px;
+  color: var(--text-dim);
+  margin-top: 4px;
+}
+
+.calendar {
+  background: var(--card);
+  border-radius: var(--radius-lg);
+  padding: 16px 14px;
+  box-shadow: var(--shadow);
+}
+
+.calendar-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.calendar-title {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.calendar-nav {
+  display: flex;
+  gap: 8px;
+}
+
+.calendar-nav button {
+  background: var(--card-2);
+  color: var(--text);
+  border: 0;
+  border-radius: 8px;
+  width: 32px;
+  height: 32px;
+  font-size: 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.calendar-week {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+  font-size: 11px;
+  color: var(--text-mute);
+  text-align: center;
+  margin-bottom: 6px;
+}
+
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 6px;
+}
+
+.calendar-day {
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  font-size: 13px;
+  color: var(--text-dim);
+  position: relative;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.calendar-day.empty {
+  background: transparent;
+}
+
+.calendar-day.today {
+  outline: 1px solid var(--primary);
+  color: var(--text);
+}
+
+.calendar-day.marked {
+  background: linear-gradient(135deg, var(--primary-2), var(--primary));
+  color: #fff;
+  font-weight: 600;
+}
+
+.calendar-day.marked::after {
+  content: "";
+  position: absolute;
+  bottom: 4px;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: #fff;
+}
+
+.calendar-legend {
+  display: flex;
+  gap: 14px;
+  font-size: 11px;
+  color: var(--text-dim);
+  margin-top: 12px;
+  justify-content: center;
+}
+
+.calendar-legend .dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  margin-right: 5px;
+  vertical-align: middle;
+}
+
+.calendar-legend .dot.marked {
+  background: var(--primary);
+}
+
+.calendar-legend .dot.today {
+  background: transparent;
+  outline: 1px solid var(--primary);
+}
+
+.record-streak {
+  background: linear-gradient(135deg, var(--card), var(--card-2));
+  border-radius: var(--radius);
+  padding: 16px;
+  margin-top: 16px;
+  text-align: center;
+  box-shadow: var(--shadow);
+}
+
+.record-streak .v {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--good);
+}
+
+.record-streak .k {
+  color: var(--text-dim);
+  font-size: 12px;
+  margin-top: 2px;
+}
+
+.record-list {
+  margin-top: 16px;
+}
+
+.record-list h3 {
+  font-size: 14px;
+  margin: 0 0 10px;
+  color: var(--text-dim);
+  font-weight: 600;
+}
+
+.record-empty {
+  color: var(--text-mute);
+  font-size: 13px;
+  text-align: center;
+  padding: 20px 0;
+}
+
+.record-item {
+  background: var(--card);
+  border-radius: 12px;
+  padding: 10px 14px;
+  margin-bottom: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+}
+
+.record-item .l {
+  color: var(--text-dim);
+}
+
+.record-item .r {
+  color: var(--text);
+  font-weight: 500;
+}
+
+.record-item .r.good {
+  color: var(--good);
+}
+.record-item .r.mid {
+  color: var(--primary);
+}
+.record-item .r.hard {
+  color: var(--warn);
+}

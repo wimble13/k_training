@@ -1,0 +1,145 @@
+.feedback-wrap {
+  padding: 16px 0;
+}
+
+.feedback-title {
+  font-size: 22px;
+  font-weight: 700;
+  margin: 0 0 4px;
+}
+
+.feedback-sub {
+  color: var(--text-dim);
+  font-size: 13px;
+  margin: 0 0 22px;
+}
+
+.feedback-section {
+  margin-bottom: 22px;
+}
+
+.feedback-section h3 {
+  font-size: 14px;
+  font-weight: 600;
+  margin: 0 0 10px;
+  color: var(--text);
+}
+
+.feeling-group {
+  display: flex;
+  gap: 10px;
+}
+
+.feeling-btn {
+  flex: 1;
+  background: var(--card);
+  border: 0;
+  color: var(--text);
+  border-radius: 14px;
+  padding: 14px 0;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  box-shadow: var(--shadow);
+}
+
+.feeling-btn .emoji {
+  font-size: 24px;
+}
+
+.feeling-btn.selected {
+  background: var(--primary-2);
+  color: #fff;
+}
+
+.feeling-btn.selected.easy {
+  background: linear-gradient(135deg, #58d6a3, #4abf8a);
+}
+.feeling-btn.selected.mid {
+  background: linear-gradient(135deg, #6ea8ff, #4a86f0);
+}
+.feeling-btn.selected.hard {
+  background: linear-gradient(135deg, #ff8a73, #ff6b5b);
+}
+
+.feedback-textarea {
+  width: 100%;
+  background: var(--card);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  color: var(--text);
+  border-radius: 14px;
+  padding: 12px 14px;
+  font-size: 15px;
+  resize: none;
+  min-height: 110px;
+  line-height: 1.5;
+  outline: none;
+  transition: border-color 0.15s ease;
+}
+
+.feedback-textarea:focus {
+  border-color: var(--primary);
+}
+
+.char-count {
+  text-align: right;
+  font-size: 11px;
+  color: var(--text-mute);
+  margin-top: 4px;
+}
+
+.char-count.warn {
+  color: var(--warn);
+}
+
+.char-count.ok {
+  color: var(--good);
+}
+
+.feedback-submit {
+  width: 100%;
+  background: var(--primary-2);
+  color: #fff;
+  border: 0;
+  border-radius: 14px;
+  padding: 14px;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: var(--shadow);
+  margin-top: 8px;
+}
+
+.feedback-submit:disabled {
+  background: var(--card-2);
+  color: var(--text-mute);
+  cursor: not-allowed;
+}
+
+.feedback-summary {
+  background: var(--card);
+  border-radius: 14px;
+  padding: 14px 16px;
+  margin-bottom: 18px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.feedback-summary .label {
+  color: var(--text-dim);
+  font-size: 12px;
+}
+
+.feedback-summary .value {
+  font-weight: 600;
+  font-size: 15px;
+}
+
+.feedback-summary .exp {
+  color: var(--accent);
+}
