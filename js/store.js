@@ -4,6 +4,8 @@
 import { EXP_PER_MINUTE, UNLOCK_RULE } from './config.js';
 
 const STORAGE_KEY = 'kegel_state_v1';
+// 当日全流程完成 ≥ 2 次才算 1 个训练日
+const MIN_SESSIONS_PER_TRAINING_DAY = 2;
 
 const defaultState = () => ({
   sessions: [],
@@ -26,6 +28,7 @@ function load() {
     } else {
       const parsed = JSON.parse(raw);
       _cache = { ...defaultState(), ...parsed };
+      recomputeDerivedStats(_cache);
     }
   } catch (e) {
     console.warn('[store] load failed, resetting', e);
@@ -77,29 +80,7 @@ export const store = {
       expEarned,
     };
     s.sessions.push(record);
-
-    s.totalExp += expEarned;
-    s.totalSeconds += Math.floor(session.elapsedMs / 1000);
-
-    const dateKey = dateKeyOf(new Date(session.startTs));
-    const lastKey = s.lastTrainingDate;
-    if (lastKey) {
-      const diff = dayDiff(lastKey, dateKey);
-      if (diff === 0) {
-        // 同一天
-      } else if (diff === 1) {
-        s.consecutiveDays += 1;
-      } else {
-        s.consecutiveDays = 1;
-      }
-    } else {
-      s.consecutiveDays = 1;
-    }
-    s.lastTrainingDate = dateKey;
-
-    // 重新计算解锁
-    s.unlockedStages = computeUnlocked(s);
-
+    recomputeDerivedStats(s);
     persist();
     return record;
   },
@@ -115,7 +96,7 @@ export const store = {
     return {
       totalExp: s.totalExp,
       totalSeconds: s.totalSeconds,
-      totalSessions: s.sessions.length,
+      totalSessions: s.qualifiedSessionCount || 0,
       consecutiveDays: s.consecutiveDays,
       lastTrainingDate: s.lastTrainingDate,
       sessions: s.sessions,
@@ -126,12 +107,38 @@ export const store = {
   getMonthMarkedDays(year, month) {
     const s = load();
     const prefix = `${year}-${String(month + 1).padStart(2, '0')}`;
-    const set = new Set();
+    const dailyCounts = new Map();
     for (const sess of s.sessions) {
+      if (!isQualifiedSession(sess)) continue;
       const k = dateKeyOf(new Date(sess.startTs));
-      if (k.startsWith(prefix)) set.add(k);
+      if (!k.startsWith(prefix)) continue;
+      dailyCounts.set(k, (dailyCounts.get(k) || 0) + 1);
+    }
+    const set = new Set();
+    for (const [k, count] of dailyCounts) {
+      if (count >= MIN_SESSIONS_PER_TRAINING_DAY) set.add(k);
     }
     return set;
+  },
+
+  // 某阶段的训练统计
+  getStageStats(stageId) {
+    const s = load();
+    const dailyCounts = new Map();
+    let totalSeconds = 0;
+    let sessions = 0;
+    for (const sess of s.sessions) {
+      if (sess.stageId !== stageId || !isQualifiedSession(sess)) continue;
+      sessions += 1;
+      totalSeconds += Math.floor(sess.elapsedMs / 1000);
+      const k = dateKeyOf(new Date(sess.startTs));
+      dailyCounts.set(k, (dailyCounts.get(k) || 0) + 1);
+    }
+    let days = 0;
+    for (const count of dailyCounts.values()) {
+      if (count >= MIN_SESSIONS_PER_TRAINING_DAY) days += 1;
+    }
+    return { sessions, days, totalSeconds };
   },
 
   // 按日期分组当日训练次数
@@ -139,6 +146,7 @@ export const store = {
     const s = load();
     let n = 0;
     for (const sess of s.sessions) {
+      if (!isQualifiedSession(sess)) continue;
       if (dateKeyOf(new Date(sess.startTs)) === dateKey) n += 1;
     }
     return n;
@@ -150,6 +158,67 @@ export const store = {
     persist();
   },
 };
+
+// 全流程完成(非提前结束)才算有效训练
+function isQualifiedSession(sess) {
+  return !sess.endedEarly;
+}
+
+function getDailyQualifiedCounts(sessions, stageId) {
+  const dailyCounts = new Map();
+  for (const sess of sessions) {
+    if (!isQualifiedSession(sess)) continue;
+    if (stageId != null && sess.stageId !== stageId) continue;
+    const k = dateKeyOf(new Date(sess.startTs));
+    dailyCounts.set(k, (dailyCounts.get(k) || 0) + 1);
+  }
+  return dailyCounts;
+}
+
+function isQualifiedTrainingDay(count) {
+  return count >= MIN_SESSIONS_PER_TRAINING_DAY;
+}
+
+function computeConsecutiveQualifiedDays(sessions) {
+  const dailyCounts = getDailyQualifiedCounts(sessions);
+  const qualified = new Set();
+  for (const [k, count] of dailyCounts) {
+    if (isQualifiedTrainingDay(count)) qualified.add(k);
+  }
+  if (qualified.size === 0) return 0;
+
+  let streak = 0;
+  const d = new Date();
+  let started = false;
+  for (let i = 0; i < 3650; i++) {
+    const k = dateKeyOf(d);
+    if (qualified.has(k)) {
+      streak += 1;
+      started = true;
+      d.setDate(d.getDate() - 1);
+    } else if (started) {
+      break;
+    } else {
+      d.setDate(d.getDate() - 1);
+    }
+  }
+  return streak;
+}
+
+function recomputeDerivedStats(s) {
+  const qualified = s.sessions.filter(isQualifiedSession);
+  s.qualifiedSessionCount = qualified.length;
+  s.totalExp = qualified.reduce((sum, sess) => sum + (sess.expEarned ?? computeExp(sess.elapsedMs)), 0);
+  s.totalSeconds = qualified.reduce((sum, sess) => sum + Math.floor(sess.elapsedMs / 1000), 0);
+  s.consecutiveDays = computeConsecutiveQualifiedDays(s.sessions);
+  if (qualified.length > 0) {
+    const last = qualified.reduce((a, b) => (a.startTs > b.startTs ? a : b));
+    s.lastTrainingDate = dateKeyOf(new Date(last.startTs));
+  } else {
+    s.lastTrainingDate = null;
+  }
+  s.unlockedStages = computeUnlocked(s);
+}
 
 function computeExp(elapsedMs) {
   const minutes = elapsedMs / 1000 / 60;
@@ -171,7 +240,7 @@ function matchRule(rule, state) {
     case 'consecutive':
       return state.consecutiveDays >= rule.days;
     case 'cumulative':
-      return state.sessions.length >= rule.sessions;
+      return (state.qualifiedSessionCount || 0) >= rule.sessions;
     case 'exp':
       return state.totalExp >= rule.value;
     default:

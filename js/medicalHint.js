@@ -4,6 +4,7 @@
 // 用 localStorage 标记是否已看过
 
 import { MEDICAL_HINT_KEY } from './config.js';
+import { audio } from './audio.js';
 
 const HINT_HTML = `
   <div class="medical-modal">
@@ -71,6 +72,7 @@ function showModal(onDone) {
 
   const btn = modal.querySelector('#medical-modal-ok');
   btn.addEventListener('click', () => {
+    audio.unlock();
     modal.classList.add('closing');
     setTimeout(() => {
       modal.remove();
@@ -96,7 +98,10 @@ function showBanner(onDone) {
       onDone();
     }, 250);
   };
-  closeBtn.addEventListener('click', close);
+  closeBtn.addEventListener('click', () => {
+    audio.unlock();
+    close();
+  });
   // 3 秒后自动消失
   setTimeout(close, 3000);
 }

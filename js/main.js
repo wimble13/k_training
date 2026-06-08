@@ -27,7 +27,18 @@ function setBackVisible(visible) {
   else b.classList.add('hidden');
 }
 
+function applyTimeTheme() {
+  const hour = new Date().getHours();
+  const theme = hour >= 6 && hour < 18 ? 'day' : 'night';
+  document.documentElement.dataset.theme = theme;
+  const meta = document.querySelector('meta[name="theme-color"]');
+  if (meta) meta.setAttribute('content', theme === 'day' ? '#faf6ee' : '#0e1726');
+}
+
 function init() {
+  applyTimeTheme();
+  setInterval(applyTimeTheme, 60000);
+
   // 安装音频解锁监听
   audio.installUnlockHandlers();
 

@@ -31,7 +31,7 @@ export function recordView(rootSel, { onBack }) {
       <div class="record-wrap">
         <div class="record-hero">
           <div class="record-stat">
-            <div class="v">${s.sessions.length}</div>
+            <div class="v">${s.qualifiedSessionCount || 0}</div>
             <div class="k">训练次数</div>
           </div>
           <div class="record-stat">

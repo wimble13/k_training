@@ -14,27 +14,28 @@ export const STAGE_CONFIG = {
   1: {
     name: '感知阶段',
     desc: '入门训练,适合初学者建立节奏感。',
-    sections: Array.from({ length: 10 }, () => [
+    sections: Array.from({ length: 30 }, () => [
       { type: 'shou', sec: 3 },
-      { type: 'fang', sec: 3 },
+      { type: 'fang', sec: 4 },
     ]).flat(),
   },
   2: {
     name: '耐力阶段',
     desc: '在感知之上,延长收缩与放松时间。',
-    sections: Array.from({ length: 12 }, () => [
+    sections: Array.from({ length: 30 }, () => [
       { type: 'shou', sec: 5 },
-      { type: 'fang', sec: 5 },
+      { type: 'fang', sec: 6 },
     ]).flat(),
   },
   3: {
     name: '强化阶段',
     desc: '长收缩 + 快肌训练,接近中级练习。',
     sections: [
-      ...Array.from({ length: 15 }, () => [
+      ...Array.from({ length: 30 }, () => [
         { type: 'shou', sec: 8 },
-        { type: 'fang', sec: 8 },
+        { type: 'fang', sec: 9 },
       ]).flat(),
+      { type: 'kuai_set', sec: 1, reps: 10, label: '快收 10 次' },
       { type: 'kuai_set', sec: 1, reps: 10, label: '快收 10 次' },
     ],
   },
@@ -42,9 +43,9 @@ export const STAGE_CONFIG = {
     name: '巩固阶段',
     desc: '长收缩 + 双组快收 + 场景整合,挑战极限。',
     sections: [
-      ...Array.from({ length: 20 }, () => [
+      ...Array.from({ length: 30 }, () => [
         { type: 'shou', sec: 10 },
-        { type: 'fang', sec: 10 },
+        { type: 'fang', sec: 11 },
       ]).flat(),
       { type: 'kuai_set', sec: 1, reps: 10, label: '快收 10 次' },
       { type: 'kuai_set', sec: 1, reps: 10, label: '快收 10 次' },

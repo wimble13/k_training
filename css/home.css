@@ -31,13 +31,114 @@
 
 .stage-card {
   position: relative;
-  background: linear-gradient(135deg, var(--card) 0%, var(--card-2) 100%);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: linear-gradient(135deg, var(--stage-from, var(--card)) 0%, var(--stage-to, var(--card-2)) 100%);
   border-radius: var(--radius-lg);
   padding: 18px;
   box-shadow: var(--shadow);
-  border: 1px solid rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--stage-border, var(--border-subtle));
   cursor: pointer;
   transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+/* 晚上:阶段越高色系越重 */
+[data-theme="night"] .stage-card[data-stage="1"] {
+  --stage-from: #2a4a72;
+  --stage-to: #243a5c;
+  --stage-accent: #8ec0ff;
+  --stage-badge-bg: rgba(110, 168, 255, 0.22);
+  --stage-border: rgba(142, 192, 255, 0.12);
+}
+
+[data-theme="night"] .stage-card[data-stage="2"] {
+  --stage-from: #243f66;
+  --stage-to: #1e3558;
+  --stage-accent: #7aadf5;
+  --stage-badge-bg: rgba(90, 150, 240, 0.22);
+  --stage-border: rgba(122, 173, 245, 0.1);
+}
+
+[data-theme="night"] .stage-card[data-stage="3"] {
+  --stage-from: #1e3658;
+  --stage-to: #182c4a;
+  --stage-accent: #6898eb;
+  --stage-badge-bg: rgba(80, 130, 220, 0.22);
+  --stage-border: rgba(104, 152, 235, 0.1);
+}
+
+[data-theme="night"] .stage-card[data-stage="4"] {
+  --stage-from: #182c48;
+  --stage-to: #122238;
+  --stage-accent: #5a88e0;
+  --stage-badge-bg: rgba(70, 115, 210, 0.25);
+  --stage-border: rgba(90, 136, 224, 0.1);
+}
+
+/* 白天 · 奶黄:阶段越高色系越重 */
+[data-theme="day"] .stage-card[data-stage="1"] {
+  --stage-from: #fffdf5;
+  --stage-to: #faf4e4;
+  --stage-accent: #c9952a;
+  --stage-badge-bg: rgba(201, 149, 42, 0.16);
+  --stage-border: rgba(201, 149, 42, 0.2);
+}
+
+[data-theme="day"] .stage-card[data-stage="2"] {
+  --stage-from: #faf0d8;
+  --stage-to: #f5e6c4;
+  --stage-accent: #b8841f;
+  --stage-badge-bg: rgba(184, 132, 31, 0.18);
+  --stage-border: rgba(184, 132, 31, 0.22);
+}
+
+[data-theme="day"] .stage-card[data-stage="3"] {
+  --stage-from: #f5e8c0;
+  --stage-to: #edd9a8;
+  --stage-accent: #a67418;
+  --stage-badge-bg: rgba(166, 116, 24, 0.2);
+  --stage-border: rgba(166, 116, 24, 0.24);
+}
+
+[data-theme="day"] .stage-card[data-stage="4"] {
+  --stage-from: #edd5a0;
+  --stage-to: #e2c888;
+  --stage-accent: #946412;
+  --stage-badge-bg: rgba(148, 100, 18, 0.22);
+  --stage-border: rgba(148, 100, 18, 0.28);
+}
+
+.stage-card-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.stage-card-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex-shrink: 0;
+  padding-left: 8px;
+  border-left: 1px solid var(--stage-border, var(--border-subtle));
+}
+
+.stage-mini-stat {
+  text-align: center;
+  min-width: 44px;
+}
+
+.stage-mini-stat .v {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--stage-accent, var(--primary));
+  line-height: 1.2;
+}
+
+.stage-mini-stat .k {
+  font-size: 10px;
+  color: var(--text-dim);
+  margin-top: 1px;
 }
 
 .stage-card:active {
@@ -45,8 +146,8 @@
 }
 
 .stage-card.locked {
-  opacity: 0.55;
-  filter: grayscale(0.5);
+  opacity: 0.62;
+  filter: grayscale(0.2);
   cursor: not-allowed;
 }
 
@@ -55,8 +156,8 @@
   font-size: 11px;
   padding: 3px 8px;
   border-radius: 999px;
-  background: rgba(110, 168, 255, 0.15);
-  color: var(--primary);
+  background: var(--stage-badge-bg, rgba(110, 168, 255, 0.15));
+  color: var(--stage-accent, var(--primary));
   margin-bottom: 8px;
 }
 

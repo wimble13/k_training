@@ -24,7 +24,7 @@ export function homeView(rootSel, { onSelectStage }) {
     root.innerHTML = `
       <div class="home-stats">
         <div class="home-stat">
-          <div class="v">${s.sessions.length}</div>
+          <div class="v">${s.qualifiedSessionCount || 0}</div>
           <div class="k">累计次数</div>
         </div>
         <div class="home-stat">
@@ -47,6 +47,12 @@ export function homeView(rootSel, { onSelectStage }) {
     bindEvents();
   }
 
+  function formatDuration(totalSeconds) {
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    return hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`;
+  }
+
   function renderCard(id, unlocked) {
     const cfg = STAGE_CONFIG[id];
     const lockedClass = unlocked ? '' : 'locked';
@@ -58,15 +64,38 @@ export function homeView(rootSel, { onSelectStage }) {
             <path d="M8 11V7a4 4 0 0 1 8 0v4"/>
           </svg>
         </div>`;
+    const statsHtml = unlocked
+      ? (() => {
+          const st = store.getStageStats(id);
+          return `
+        <div class="stage-card-stats">
+          <div class="stage-mini-stat">
+            <div class="v">${st.sessions}</div>
+            <div class="k">次数</div>
+          </div>
+          <div class="stage-mini-stat">
+            <div class="v">${st.days}</div>
+            <div class="k">天数</div>
+          </div>
+          <div class="stage-mini-stat">
+            <div class="v">${formatDuration(st.totalSeconds)}</div>
+            <div class="k">时长</div>
+          </div>
+        </div>`;
+        })()
+      : '';
     return `
       <div class="stage-card ${lockedClass}" data-stage="${id}">
-        <div class="badge">第 ${id} 阶段</div>
-        <h3>${cfg.name}</h3>
-        <p class="desc">${STAGE_DESCS[id]}</p>
-        <div class="meta">
-          <span>${cfg.sections.length} 个动作</span>
-          <span>约 ${Math.round((cfg.sections.reduce((a, s) => a + s.sec, 0)) / 60)} 分钟</span>
+        <div class="stage-card-body">
+          <div class="badge">第 ${id} 阶段</div>
+          <h3>${cfg.name}</h3>
+          <p class="desc">${STAGE_DESCS[id]}</p>
+          <div class="meta">
+            <span>${cfg.sections.length} 个动作</span>
+            <span>约 ${Math.round((cfg.sections.reduce((a, s) => a + s.sec, 0)) / 60)} 分钟</span>
+          </div>
         </div>
+        ${statsHtml}
         ${lockIcon}
       </div>
     `;

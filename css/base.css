@@ -1,6 +1,13 @@
 :root {
   --safe-top: env(safe-area-inset-top, 0px);
   --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --radius: 16px;
+  --radius-lg: 22px;
+}
+
+/* 晚上(默认) */
+:root,
+[data-theme="night"] {
   --bg: #0e1726;
   --bg-2: #16223a;
   --card: #1d2a44;
@@ -15,8 +22,34 @@
   --warn: #ff8a73;
   --lock: #3a4763;
   --shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
-  --radius: 16px;
-  --radius-lg: 22px;
+  --app-gradient: linear-gradient(180deg, #0e1726 0%, #0a1220 100%);
+  --header-gradient: linear-gradient(180deg, rgba(14, 23, 38, 0.95) 0%, rgba(14, 23, 38, 0) 100%);
+  --overlay-bg: rgba(8, 14, 26, 0.85);
+  --btn-active-bg: rgba(255, 255, 255, 0.06);
+  --border-subtle: rgba(255, 255, 255, 0.04);
+}
+
+/* 白天 6:00–18:00 · 奶黄色系 */
+[data-theme="day"] {
+  --bg: #faf6ee;
+  --bg-2: #f3ead8;
+  --card: #fffdf8;
+  --card-2: #faf5eb;
+  --text: #3d3528;
+  --text-dim: #7a6e5c;
+  --text-mute: #a89880;
+  --primary: #c9952a;
+  --primary-2: #b8841f;
+  --accent: #e07c3a;
+  --good: #4a9e6e;
+  --warn: #d96a52;
+  --lock: #b8a890;
+  --shadow: 0 8px 24px rgba(120, 90, 40, 0.1);
+  --app-gradient: linear-gradient(180deg, #faf6ee 0%, #f5eedc 100%);
+  --header-gradient: linear-gradient(180deg, rgba(250, 246, 238, 0.95) 0%, rgba(250, 246, 238, 0) 100%);
+  --overlay-bg: rgba(250, 246, 238, 0.9);
+  --btn-active-bg: rgba(120, 90, 40, 0.06);
+  --border-subtle: rgba(120, 90, 40, 0.1);
 }
 
 * {
@@ -47,7 +80,7 @@ body {
   min-height: 100%;
   max-width: 480px;
   margin: 0 auto;
-  background: linear-gradient(180deg, #0e1726 0%, #0a1220 100%);
+  background: var(--app-gradient);
 }
 
 #app-header {
@@ -58,7 +91,7 @@ body {
   position: sticky;
   top: 0;
   z-index: 10;
-  background: linear-gradient(180deg, rgba(14, 23, 38, 0.95) 0%, rgba(14, 23, 38, 0) 100%);
+  background: var(--header-gradient);
   backdrop-filter: blur(8px);
 }
 
@@ -84,7 +117,7 @@ body {
 }
 
 #app-header button:active {
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--btn-active-bg);
 }
 
 #back-btn.hidden {
@@ -123,7 +156,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(8, 14, 26, 0.85);
+  background: var(--overlay-bg);
   backdrop-filter: blur(4px);
 }
 
