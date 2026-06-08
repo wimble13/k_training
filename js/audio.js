@@ -59,13 +59,13 @@ class AudioManager {
       this._bgm = this._makeAudio(AUDIO_FILES.bgm);
       this._bgm.loop = true;
       this._bgm.volume = 0.35;
-      // 4. 尝试播放再立即暂停,以"激活"iOS 媒体会话
+      // 4. iOS 媒体会话激活:必须在用户手势的同步调用栈里 play() 一次
+      // 用静音(volume=0)播放,这样即使后续 pause() 不可靠,也不会被用户听到
+      // 等 stopBgm() 会彻底销毁这个 audio 元素
       try {
         await this._bgm.play();
-        this._bgm.pause();
-        this._bgm.currentTime = 0;
       } catch (e) {
-        // 忽略,占位文件可能失败
+        // 忽略
       }
       this._unlocked = true;
     } catch (e) {
@@ -106,9 +106,14 @@ class AudioManager {
   // 背景音乐
   playBgm() {
     this._bgmWantPlay = true;
-    if (!this._unlocked || !this._soundOn || !this._bgm) return;
-    try {
+    if (!this._unlocked || !this._soundOn) return;
+    // 每次 playBgm 时,如无 _bgm 或 _bgm.src 为空,重建
+    if (!this._bgm || !this._bgm.src || this._bgm._destroyed) {
+      this._bgm = this._makeAudio(AUDIO_FILES.bgm);
+      this._bgm.loop = true;
       this._bgm.volume = 0.35;
+    }
+    try {
       const p = this._bgm.play();
       if (p && p.catch) p.catch(() => {});
     } catch (e) {
@@ -119,11 +124,18 @@ class AudioManager {
   stopBgm() {
     this._bgmWantPlay = false;
     if (!this._bgm) return;
+    // iOS 上 audio.pause() 经常对 loop 元素不生效。
+    // 暴力做法:卸载 src 引用,标记销毁,等下次 playBgm 时重建。
     try {
       this._bgm.pause();
-    } catch (e) {
-      // ignore
-    }
+    } catch (e) { /* ignore */ }
+    try {
+      // 把 src 设为空字符串 + 标记,等浏览器 GC
+      this._bgm.removeAttribute('src');
+      this._bgm.load(); // 触发重新加载(空 src)以确保停掉
+    } catch (e) { /* ignore */ }
+    this._bgm._destroyed = true;
+    this._bgm = null;
   }
 
   // 一次性提示音

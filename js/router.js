@@ -6,6 +6,8 @@
 //   #/feedback/:sessionId
 //   #/record
 
+import { audio } from './audio.js';
+
 const routes = [];
 
 export function registerRoute(pattern, handler) {
@@ -39,6 +41,9 @@ export function startRouter(defaultHash = '#/home') {
       }
       _cleanup = null;
     }
+
+    // 路由切换时强制停掉 BGM(防御训练页/反馈页之间切换的泄漏)
+    audio.stopBgm();
 
     for (const r of routes) {
       const m = path.match(r.regex);
