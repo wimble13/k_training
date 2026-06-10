@@ -73,6 +73,7 @@ function showModal(onDone) {
   const btn = modal.querySelector('#medical-modal-ok');
   btn.addEventListener('click', () => {
     audio.unlock();
+    audio.primeBgm();
     onDone();
     modal.classList.add('closing');
     setTimeout(() => {
@@ -100,6 +101,7 @@ function showBanner(onDone) {
   };
   closeBtn.addEventListener('click', () => {
     audio.unlock();
+    audio.primeBgm();
     close();
   });
   // 3 秒后自动消失

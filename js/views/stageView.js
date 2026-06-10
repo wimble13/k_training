@@ -51,6 +51,7 @@ export function stageView(rootSel, { stageId, onBack, onSelectSlot }) {
     root.querySelectorAll('.slot-card').forEach((card) => {
       card.addEventListener('click', () => {
         audio.unlock();
+        audio.primeBgm();
         const slot = card.dataset.slot;
         onSelectSlot(stageId, slot);
       });

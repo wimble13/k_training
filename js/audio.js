@@ -194,6 +194,21 @@ class AudioManager {
     return this._vibrationOn;
   }
 
+  // 在用户手势内预激活 BGM(音量 0),9 秒后 beginRun 再真正播放
+  primeBgm() {
+    this._bgmWantPlay = true;
+    if (!this._unlocked || !this._soundOn) return;
+    if (!this._bgm || this._bgm._destroyed) {
+      this._bgm = this._createBgmElement();
+    }
+    try {
+      this._bgm.volume = 0;
+      this._bgm.play();
+      this._bgm.pause();
+      this._bgm.currentTime = 0;
+    } catch (e) { /* ignore */ }
+  }
+
   playBgm() {
     this._bgmWantPlay = true;
     if (!this._unlocked || !this._soundOn) return;
@@ -223,6 +238,17 @@ class AudioManager {
         this._bgm = null;
         this._startBgm(true);
       }
+    }
+  }
+
+  // 从后台/锁屏回到前台时恢复音频会话
+  resumeAfterBackground() {
+    const Ctx = window.AudioContext || window.webkitAudioContext;
+    if (Ctx && this._audioCtx && this._audioCtx.state === 'suspended') {
+      this._audioCtx.resume().catch(() => {});
+    }
+    if (this._bgmWantPlay && this._soundOn && this._unlocked) {
+      this.playBgm();
     }
   }
 

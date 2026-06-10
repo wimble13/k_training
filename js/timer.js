@@ -12,8 +12,10 @@ export function createTimer({ durationMs, onTick, onFinish, sectionIndex = 0 }) 
   let pausedAt = 0;
   let pausedAccumMs = 0;
   let rafId = 0;
+  let intervalId = 0;
   let _finished = false;
   let _externalDuration = durationMs;
+  let _visHandler = null;
 
   function setDuration(ms) {
     _externalDuration = ms;
@@ -40,6 +42,18 @@ export function createTimer({ durationMs, onTick, onFinish, sectionIndex = 0 }) 
     rafId = requestAnimationFrame(tick);
   }
 
+  function startInterval() {
+    if (intervalId) clearInterval(intervalId);
+    intervalId = setInterval(tick, 200);
+  }
+
+  function stopInterval() {
+    if (intervalId) {
+      clearInterval(intervalId);
+      intervalId = 0;
+    }
+  }
+
   function start() {
     if (status === 'running') return;
     status = 'running';
@@ -47,6 +61,13 @@ export function createTimer({ durationMs, onTick, onFinish, sectionIndex = 0 }) 
     startTs = Date.now();
     pausedAccumMs = 0;
     rafId = requestAnimationFrame(tick);
+    startInterval();
+    if (!_visHandler) {
+      _visHandler = () => {
+        if (document.visibilityState === 'visible' && status === 'running') tick();
+      };
+      document.addEventListener('visibilitychange', _visHandler);
+    }
   }
 
   function pause() {
@@ -54,6 +75,7 @@ export function createTimer({ durationMs, onTick, onFinish, sectionIndex = 0 }) 
     status = 'paused';
     pausedAt = Date.now();
     cancelAnimationFrame(rafId);
+    stopInterval();
   }
 
   function resume() {
@@ -61,6 +83,7 @@ export function createTimer({ durationMs, onTick, onFinish, sectionIndex = 0 }) 
     pausedAccumMs += Date.now() - pausedAt;
     status = 'running';
     rafId = requestAnimationFrame(tick);
+    startInterval();
   }
 
   function toggle() {
@@ -90,8 +113,17 @@ export function createTimer({ durationMs, onTick, onFinish, sectionIndex = 0 }) 
     return Math.max(0, _externalDuration - currentElapsedMs());
   }
 
+  function forceTick() {
+    tick();
+  }
+
   function destroy() {
     cancelAnimationFrame(rafId);
+    stopInterval();
+    if (_visHandler) {
+      document.removeEventListener('visibilitychange', _visHandler);
+      _visHandler = null;
+    }
   }
 
   return {
@@ -105,6 +137,7 @@ export function createTimer({ durationMs, onTick, onFinish, sectionIndex = 0 }) 
     getStatus,
     getRemainingMs,
     currentElapsedMs,
+    forceTick,
     destroy,
   };
 }

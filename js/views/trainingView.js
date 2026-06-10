@@ -65,9 +65,32 @@ export function trainingView(rootSel, { stageId, slot, onComplete }) {
   const startTs = Date.now();
   let preStartLeft = START_PROMPT_DURATION_MS; // pre_start 倒计时剩余
 
+  let wakeLock = null;
+
+  async function requestWakeLock() {
+    try {
+      if ('wakeLock' in navigator && document.visibilityState === 'visible') {
+        if (wakeLock) return;
+        wakeLock = await navigator.wakeLock.request('screen');
+        wakeLock.addEventListener('release', () => {
+          wakeLock = null;
+        });
+      }
+    } catch (e) { /* ignore */ }
+  }
+
+  function releaseWakeLock() {
+    if (!wakeLock) return;
+    wakeLock.release().catch(() => {});
+    wakeLock = null;
+  }
+
   const trainer = runTraining({
     stageId,
     sections: cfg.sections,
+    onBeginRun: () => {
+      requestWakeLock();
+    },
     onPreStart: () => {
       // 等待 start 音播放,中央显示"准备"+ 倒计时
       waveAction.textContent = '准备';
@@ -138,9 +161,11 @@ export function trainingView(rootSel, { stageId, slot, onComplete }) {
     const wrap = root.querySelector('.training-wrap');
     const startNow = () => {
       audio.unlock();
+      audio.primeBgm();
       trainer.start();
     };
     if (audio.isUnlocked()) {
+      audio.primeBgm();
       trainer.start();
       return;
     }
@@ -198,9 +223,12 @@ export function trainingView(rootSel, { stageId, slot, onComplete }) {
     btnVibrate.classList.toggle('off', !next);
   });
 
-  function onVisibility() {
-    if (document.visibilityState === 'visible' && trainer.getPhase() === 'running' && !trainer.isPaused()) {
-      audio.playBgm();
+  async function onVisibility() {
+    if (document.visibilityState !== 'visible') return;
+    if (trainer.getPhase() === 'running' && !trainer.isPaused()) {
+      await requestWakeLock();
+      trainer.syncAfterBackground();
+      audio.resumeAfterBackground();
     }
   }
   document.addEventListener('visibilitychange', onVisibility);
@@ -208,6 +236,7 @@ export function trainingView(rootSel, { stageId, slot, onComplete }) {
   return {
     destroy() {
       clearInterval(preStartInterval);
+      releaseWakeLock();
       trainer.destroy();
       unbindLongPress();
       document.removeEventListener('visibilitychange', onVisibility);

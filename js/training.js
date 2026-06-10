@@ -59,6 +59,7 @@ export function runTraining({
   onSectionTick,
   onComplete,
   onPauseChange,
+  onBeginRun,
 }) {
   const steps = expandSteps(sections);
   const totalMs = steps.reduce((a, s) => a + s.sec * 1000, 0);
@@ -137,6 +138,34 @@ export function runTraining({
     audio.vibrate();
     audio.playBgm();
     timer.start();
+    onBeginRun && onBeginRun();
+  }
+
+  function syncAfterBackground() {
+    if (phase !== 'running' || paused) return;
+    timer.forceTick();
+    const elapsedMs = timer.currentElapsedMs();
+    let idx = 0;
+    for (let i = 0; i < stepStarts.length; i++) {
+      if (elapsedMs >= stepStarts[i]) idx = i;
+      else break;
+    }
+    currentStepIndex = idx;
+    const step = steps[idx];
+    onSectionStart && onSectionStart(step);
+    audio.playOneShot(step.type);
+    audio.vibrate();
+    onSectionTick && onSectionTick({
+      step,
+      stepIndex: idx,
+      stepElapsedMs: elapsedMs - stepStarts[idx],
+      stepDurationMs: step.sec * 1000,
+      sectionIndex: step.sectionIndex,
+      section: step.section,
+      totalElapsedMs: elapsedMs,
+      totalDurationMs: totalMs,
+      remainingMs: totalMs - elapsedMs,
+    });
   }
 
   function cancelFromPreStart() {
@@ -228,6 +257,7 @@ export function runTraining({
     getCurrentStep,
     getSteps: () => steps.slice(),
     getSectionCount: () => sections.length,
+    syncAfterBackground,
   };
 }
 
