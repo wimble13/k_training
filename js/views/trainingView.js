@@ -133,10 +133,33 @@ export function trainingView(rootSel, { stageId, slot, onComplete }) {
     waveTime.textContent = String(Math.ceil(preStartLeft / 1000));
   }, 100);
 
-  // 训练前先显示医学提示(首次模态 / 后续 banner)
-  showMedicalHint().then(() => {
-    trainer.start();
-  });
+  // 训练前先显示医学提示,再在手势链内启动(避免 iOS 无声)
+  function beginTrainingWithAudio() {
+    const wrap = root.querySelector('.training-wrap');
+    const startNow = () => {
+      audio.unlock();
+      trainer.start();
+    };
+    if (audio.isUnlocked()) {
+      trainer.start();
+      return;
+    }
+    const overlay = document.createElement('div');
+    overlay.className = 'audio-start-overlay';
+    overlay.innerHTML =
+      '<div class="audio-start-card"><div class="audio-start-title">点击启用声音</div><div class="audio-start-sub">并开始训练</div></div>';
+    wrap.appendChild(overlay);
+    const handler = () => {
+      overlay.remove();
+      wrap.removeEventListener('click', handler);
+      wrap.removeEventListener('touchend', handler);
+      startNow();
+    };
+    wrap.addEventListener('click', handler);
+    wrap.addEventListener('touchend', handler);
+  }
+
+  showMedicalHint().then(beginTrainingWithAudio);
 
   // 暂停/继续 / 取消
   btnPause.addEventListener('click', () => {

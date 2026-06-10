@@ -73,11 +73,11 @@ function showModal(onDone) {
   const btn = modal.querySelector('#medical-modal-ok');
   btn.addEventListener('click', () => {
     audio.unlock();
+    onDone();
     modal.classList.add('closing');
     setTimeout(() => {
       modal.remove();
       document.body.style.overflow = '';
-      onDone();
     }, 200);
   }, { once: true });
 }

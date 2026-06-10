@@ -11,99 +11,59 @@ const AUDIO_FILES = {
   kuai: 'assets/audio/kuai.mp3',
 };
 
+const ONESHOT_KEYS = Object.keys(AUDIO_FILES).filter((k) => k !== 'bgm');
+
 class AudioManager {
   constructor() {
     this._unlocked = false;
     this._bgm = null;
-    this._bgmElements = new Set(); // 追踪所有 BGM 实例,防止 iOS 孤儿音频继续播
-    this._oneshotPool = {};
-    // 一次性音的 clone 池,用于 playOneShot 轮换播放
-    // iOS Safari 同时存在的 <audio> 数量有限,池化避免长时间训练触发上限
-    this._clonePoolSize = 4;
-    this._cloneRoundRobin = {}; // { name: nextIndex }
+    this._bgmWantPlay = false;
+    this._bgmElements = new Set();
+    // 每个提示音 2 个 DOM 元素轮换(iOS 上 cloneNode 不可靠)
+    this._oneShotSlots = {};
+    this._oneShotIdx = {};
     this._soundOn = true;
     this._vibrationOn = true;
-    this._unlockHandlers = [];
     this._audioCtx = null;
+    this._mount = null;
   }
 
-  // 首次手势解锁(挂一次性监听)
   installUnlockHandlers() {
     const handler = () => {
-      this.unlock().then((ok) => {
-        const hint = document.getElementById('audio-unlock-hint');
-        if (ok) {
-          document.removeEventListener('click', handler, true);
-          document.removeEventListener('touchend', handler, true);
-          document.removeEventListener('pointerdown', handler, true);
-          if (hint) hint.classList.add('hidden');
-        } else if (hint) {
-          // 解锁失败:保留监听,提示用户再点一次
-          const sub = hint.querySelector('.hint-sub');
-          if (sub) sub.textContent = '音频解锁失败,请再点击一次';
-        }
-      });
+      const ok = this._doUnlock();
+      const hint = document.getElementById('audio-unlock-hint');
+      if (ok) {
+        document.removeEventListener('click', handler, true);
+        document.removeEventListener('touchend', handler, true);
+        document.removeEventListener('pointerdown', handler, true);
+        if (hint) hint.classList.add('hidden');
+      } else if (hint) {
+        const sub = hint.querySelector('.hint-sub');
+        if (sub) sub.textContent = '音频解锁失败,请再点击一次';
+      }
     };
     document.addEventListener('click', handler, true);
     document.addEventListener('touchend', handler, true);
     document.addEventListener('pointerdown', handler, true);
   }
 
-  // 真正的解锁动作
-  // 返回 Promise<boolean> true = 解锁成功, false = 解锁失败
-  // 注意:iOS 要求 play() 在用户手势的同步调用栈内触发,不能 await 之后再 play
+  // 在用户手势的同步调用栈内执行
   unlock() {
     if (this._unlocked) return Promise.resolve(true);
-    try {
-      // 1. 预加载所有一次性音频(同步)
-      for (const key of Object.keys(AUDIO_FILES)) {
-        if (key === 'bgm') continue;
-        if (!this._oneshotPool[key]) {
-          this._oneshotPool[key] = this._makeAudio(AUDIO_FILES[key]);
-        }
-      }
-      // 2. 哨兵音(音量 0,同步 play):确认提示音链路已激活
-      const sentinel = this._oneshotPool['start'];
-      let sentinelOk = false;
-      if (sentinel) {
-        try {
-          sentinel.volume = 0;
-          sentinel.play();
-          sentinelOk = true;
-          sentinel.pause();
-          sentinel.currentTime = 0;
-          sentinel.volume = 0.85;
-        } catch (e) {
-          sentinelOk = false;
-          sentinel.volume = 0.85;
-        }
-      }
-      // 3. BGM 探针(音量 0,同步 play):激活 BGM 链路,测完立刻销毁
-      let bgmProbe = null;
-      try {
-        bgmProbe = this._createBgmElement();
-        bgmProbe.volume = 0;
-        bgmProbe.play();
-      } catch (e) { /* BGM 探针失败不阻断解锁 */ }
-      if (bgmProbe) this._killAudioElement(bgmProbe);
-      // 4. AudioContext resume(放 play 之后,不阻塞手势链)
-      const Ctx = window.AudioContext || window.webkitAudioContext;
-      if (Ctx) {
-        this._audioCtx = this._audioCtx || new Ctx();
-        if (this._audioCtx.state === 'suspended') {
-          this._audioCtx.resume().catch(() => {});
-        }
-      }
-      if (sentinelOk) {
-        this._unlocked = true;
-        return Promise.resolve(true);
-      }
-      this.stopBgm();
-      return Promise.resolve(false);
-    } catch (e) {
-      console.warn('[audio] unlock failed', e);
-      return Promise.resolve(false);
+    const ok = this._doUnlock();
+    return Promise.resolve(ok);
+  }
+
+  _getMount() {
+    if (!this._mount) {
+      this._mount = document.createElement('div');
+      this._mount.id = 'audio-mount';
+      this._mount.setAttribute('aria-hidden', 'true');
+      this._mount.style.cssText =
+        'position:fixed;width:0;height:0;overflow:hidden;opacity:0;pointer-events:none';
+      document.body.appendChild(this._mount);
     }
+    return this._mount;
   }
 
   _makeAudio(src) {
@@ -111,7 +71,77 @@ class AudioManager {
     a.preload = 'auto';
     a.playsInline = true;
     a.setAttribute('playsinline', '');
+    a.setAttribute('webkit-playsinline', '');
+    this._getMount().appendChild(a);
     return a;
+  }
+
+  _ensureOneShotSlots() {
+    for (const key of ONESHOT_KEYS) {
+      if (!this._oneShotSlots[key]) {
+        this._oneShotSlots[key] = [
+          this._makeAudio(AUDIO_FILES[key]),
+          this._makeAudio(AUDIO_FILES[key]),
+        ];
+        this._oneShotIdx[key] = 0;
+      }
+    }
+  }
+
+  // 同步预热:在用户手势内 play 一次(音量 0)
+  _warmElement(el) {
+    try {
+      const prev = el.volume;
+      el.volume = 0;
+      el.play();
+      el.pause();
+      el.currentTime = 0;
+      el.volume = prev > 0 ? prev : 0.85;
+      return true;
+    } catch (e) {
+      try {
+        el.volume = 0.85;
+      } catch (e2) { /* ignore */ }
+      return false;
+    }
+  }
+
+  _doUnlock() {
+    if (this._unlocked) return true;
+    try {
+      this._ensureOneShotSlots();
+      let warmed = 0;
+      for (const key of ONESHOT_KEYS) {
+        for (const el of this._oneShotSlots[key]) {
+          if (this._warmElement(el)) warmed += 1;
+        }
+      }
+      let bgmProbe = null;
+      try {
+        bgmProbe = this._createBgmElement();
+        bgmProbe.volume = 0;
+        if (this._warmElement(bgmProbe)) warmed += 1;
+      } catch (e) { /* ignore */ }
+      if (bgmProbe) this._killAudioElement(bgmProbe);
+
+      const Ctx = window.AudioContext || window.webkitAudioContext;
+      if (Ctx) {
+        this._audioCtx = this._audioCtx || new Ctx();
+        if (this._audioCtx.state === 'suspended') {
+          this._audioCtx.resume().catch(() => {});
+        }
+      }
+
+      if (warmed > 0) {
+        this._unlocked = true;
+        return true;
+      }
+      this.stopBgm();
+      return false;
+    } catch (e) {
+      console.warn('[audio] unlock failed', e);
+      return false;
+    }
   }
 
   _createBgmElement() {
@@ -119,7 +149,6 @@ class AudioManager {
     a.loop = true;
     a.volume = 0.35;
     a.setAttribute('data-kegel-bgm', '1');
-    document.body.appendChild(a);
     this._bgmElements.add(a);
     return a;
   }
@@ -165,11 +194,13 @@ class AudioManager {
     return this._vibrationOn;
   }
 
-  // 背景音乐
   playBgm() {
     this._bgmWantPlay = true;
     if (!this._unlocked || !this._soundOn) return;
-    // 每次播放前确保只有一个活跃实例(只销毁元素,不清 _bgmWantPlay)
+    this._startBgm(false);
+  }
+
+  _startBgm(isRetry) {
     if (!this._bgm || this._bgm._destroyed) {
       for (const el of Array.from(this._bgmElements)) this._killAudioElement(el);
       this._bgm = this._createBgmElement();
@@ -177,45 +208,59 @@ class AudioManager {
     try {
       this._bgm.volume = 0.35;
       const p = this._bgm.play();
-      if (p && p.catch) p.catch(() => {});
+      if (p && p.catch) {
+        p.catch(() => {
+          if (!isRetry) {
+            this._killAudioElement(this._bgm);
+            this._bgm = null;
+            this._startBgm(true);
+          }
+        });
+      }
     } catch (e) {
-      // ignore
+      if (!isRetry) {
+        this._killAudioElement(this._bgm);
+        this._bgm = null;
+        this._startBgm(true);
+      }
     }
   }
 
   stopBgm() {
     this._bgmWantPlay = false;
-    // 停掉所有 BGM 实例(iOS 上 pause 对 loop 元素常失效,需逐个卸载)
     const all = Array.from(this._bgmElements);
     for (const el of all) this._killAudioElement(el);
     this._bgm = null;
   }
 
-  // 一次性提示音
-  // 用池化 + 轮换避免 iOS Safari 同时存在的 <audio> 数量超限
   playOneShot(name) {
     if (!this._unlocked || !this._soundOn) return;
-    const src = this._oneshotPool[name];
-    if (!src) return;
-    // 每个 name 维护 N 个 clone,轮换使用
-    if (!src._clones) {
-      src._clones = [];
-      this._cloneRoundRobin[name] = 0;
-    }
-    // 按需补足 clone 数量
-    while (src._clones.length < this._clonePoolSize) {
-      src._clones.push(src.cloneNode(true));
-    }
-    const idx = this._cloneRoundRobin[name] % this._clonePoolSize;
-    this._cloneRoundRobin[name] = (idx + 1) % this._clonePoolSize;
-    const clone = src._clones[idx];
-    try {
-      clone.currentTime = 0;
-      clone.volume = 0.85;
-      clone.play().catch(() => {});
-    } catch (e) {
-      // ignore
-    }
+    this._ensureOneShotSlots();
+    const slots = this._oneShotSlots[name];
+    if (!slots) return;
+
+    const idx = this._oneShotIdx[name] || 0;
+    const alt = 1 - idx;
+    this._oneShotIdx[name] = alt;
+
+    this._playSlot(slots[idx], slots[alt]);
+  }
+
+  _playSlot(primary, fallback) {
+    const tryPlay = (el, canRetry) => {
+      try {
+        el.pause();
+        el.currentTime = 0;
+        el.volume = 0.85;
+        const p = el.play();
+        if (p && p.catch && canRetry) {
+          p.catch(() => tryPlay(fallback, false));
+        }
+      } catch (e) {
+        if (canRetry) tryPlay(fallback, false);
+      }
+    };
+    tryPlay(primary, true);
   }
 
   vibrate(ms = VIBRATE_MS) {

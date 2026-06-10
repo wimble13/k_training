@@ -1,4 +1,5 @@
 .training-wrap {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -318,4 +319,34 @@
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+}
+
+.audio-start-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.45);
+  border-radius: var(--radius-lg);
+}
+
+.audio-start-card {
+  text-align: center;
+  padding: 24px 32px;
+  background: var(--card);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+.audio-start-title {
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.audio-start-sub {
+  margin-top: 6px;
+  font-size: 13px;
+  color: var(--text-dim);
 }

@@ -2,6 +2,7 @@
 
 import { STAGE_CONFIG, SLOTS } from '../config.js';
 import { store } from '../store.js';
+import { audio } from '../audio.js';
 
 export function stageView(rootSel, { stageId, onBack, onSelectSlot }) {
   const root = document.querySelector(rootSel);
@@ -49,6 +50,7 @@ export function stageView(rootSel, { stageId, onBack, onSelectSlot }) {
   function bindEvents() {
     root.querySelectorAll('.slot-card').forEach((card) => {
       card.addEventListener('click', () => {
+        audio.unlock();
         const slot = card.dataset.slot;
         onSelectSlot(stageId, slot);
       });
